@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impostor Word Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #6a11cb;
+            --secondary-color: #2575fc;
+            --card-bg: #ffffff;
+            --card-impostor-bg: #ff4757; /* Vibrant red for impostor */
+            --card-word-bg: #2ecc71; /* Green for word */
+            --text-color: #333;
+            --light-text-color: #f4f4f4;
+            --dark-bg: #1e1e2f;
+            --medium-bg: #2c2c3e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--light-text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            background-color: var(--medium-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 700px; /* Adjusted max-width for single card focus */
+            margin-top: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .language-selection {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            background-color: var(--dark-bg);
+            border-radius: 8px;
+        }
+        .language-selection label {
+            font-size: 1.1em;
+        }
+        .language-selection select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--light-text-color);
+            color: var(--text-color);
+            font-size: 1em;
+        }
+
+        .setup-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+        }
+
+        .setup-section label {
+            font-size: 1.1em;
+            margin-right: 10px;
+        }
+
+        .setup-section input[type="number"] {
+            padding: 10px;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 1em;
+            width: 70px;
+            text-align: center;
+            background-color: var(--light-text-color);
+            color: var(--text-color);
+        }
+
+        .setup-section button, .action-btn { /* Combined styling for main buttons */
+            padding: 12px 25px;
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-left: 10px; /* For setup button */
+            font-weight: 600;
+        }
+        .action-btn {
+            margin-left: 0; /* Reset margin for action buttons */
+            min-width: 220px; /* Ensure consistent width */
+        }
+
+        .setup-section button:hover, .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        .setup-section button:active, .action-btn:active {
+            transform: translateY(0px);
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column; /* Center content vertically too */
+            justify-content: center;
+            align-items: center;
+            min-height: 280px; /* Enough space for one card or prompt */
+            perspective: 1000px;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .game-area h2 { /* Styling for prompts */
+            font-size: 1.5em;
+            color: var(--light-text-color);
+        }
+
+        .card {
+            width: 180px; /* Slightly larger card */
+            height: 260px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            border-radius: 10px;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .card-front {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 3px solid var(--primary-color);
+        }
+        .card-front .player-number {
+            font-size: 1.7em;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        .card-front .instruction-text {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .card-back {
+            color: var(--light-text-color);
+            transform: rotateY(180deg);
+        }
+        
+        .card-back.impostor-card {
+            background-color: var(--card-impostor-bg);
+        }
+        .card-back.word-card {
+            background-color: var(--card-word-bg);
+        }
+        
+        .card-back .role-text {
+            font-size: 1.3em; /* Adjusted for potentially longer German text */
+            font-weight: 700;
+            text-transform: uppercase;
+            line-height: 1.3;
+        }
+        .card-back .word-text {
+            font-size: 1.5em; /* Larger for the actual word/impostor status */
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .instructions-section {
+            margin-top: 30px;
+            text-align: left;
+            line-height: 1.7;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+        }
+        .instructions-section h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+        .instructions-section ul {
+            list-style-position: inside;
+            padding-left: 5px;
+        }
+        .instructions-section li {
+            margin-bottom: 8px;
+        }
+
+        #message-area {
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: var(--card-impostor-bg);
+            min-height: 20px;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="game-title-h1">The Impostor Game</h1>
+    </header>
+
+    <div class="container">
+        <div class="language-selection">
+            <label for="language-selector" id="language-label">Language:</label>
+            <select id="language-selector">
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+            </select>
+        </div>
+
+        <div class="setup-section" id="setup-section">
+            <label for="player-count" id="player-count-label">Number of Players (min 3):</label>
+            <input type="number" id="player-count" value="3" min="3" max="20">
+            <button id="main-start-game-btn">Start Game</button>
+            <div id="message-area"></div>
+        </div>
+
+        <div class="game-area" id="game-area">
+            <!-- Dynamically filled: Prompts or a single card -->
+        </div>
+
+        <div class="action-buttons" id="action-buttons-area">
+            <!-- Dynamically filled with buttons like "Reveal Card", "Next Player", "New Game" -->
+        </div>
+
+        <div class="instructions-section">
+            <h2 id="instructions-title">How to Play</h2>
+            <ul id="instructions-list">
+                <!-- Filled by JS -->
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Impostor Game Master</p>
+    </footer>
+
+    <script>
+        const uiStrings = {
+            en: {
+                gameTitle: "The Impostor Game",
+                numPlayersLabel: "Number of Players (min 3):",
+                startGame: "Start Game",
+                newGame: "New Game",
+                playerTurnPrompt: (playerNum) => `Player ${playerNum}, it's your turn. Please look away, other players!`,
+                readyButton: (playerNum) => `I am Player ${playerNum} - Show My Card`,
+                clickToReveal: "Click to reveal your role",
+                hideCardAndNextPlayer: "Hide Card & Continue",
+                hideCardAndPassTo: (playerNum) => `Hide Card & Pass to Player ${playerNum}`,
+                allPlayersViewed: "All players have seen their roles. The game begins! Start discussing.",
+                impostorRole: "YOU ARE THE",
+                impostorText: "IMPOSTOR",
+                wordIs: "THE WORD IS:",
+                instructionsTitle: "How to Play",
+                instructions: [
+                    "Select your language and enter the number of players (3 or more).",
+                    "Click 'Start Game'.",
+                    "The screen will prompt each player one by one. Only the current player should look at the screen.",
+                    "When it's your turn, click 'Show My Card'.",
+                    "Click the card to see your role. Memorize it!",
+                    "One player is the 'Impostor' and won't know the secret word. Everyone else gets the word.",
+                    "Click 'Hide Card & Continue' (or 'Pass to Next Player') and then pass the device if needed.",
+                    "After everyone has seen their role, players take turns describing the word (or pretending to, if they're the Impostor).",
+                    "Discuss and vote to find the Impostor!"
+                ],
+                playerCountError: "Please enter a number of players between 3 and 20.",
+                languageLabel: "Language:",
+                playerX: (playerNum) => `Player ${playerNum}`
+            },
+            de: {
+                gameTitle: "Das Verräterspiel",
+                numPlayersLabel: "Anzahl Spieler (min 3):",
+                startGame: "Spiel starten",
+                newGame: "Neues Spiel",
+                playerTurnPrompt: (playerNum) => `Spieler ${playerNum}, du bist dran. Bitte wegschauen, andere Spieler!`,
+                readyButton: (playerNum) => `Ich bin Spieler ${playerNum} - Meine Karte zeigen`,
+                clickToReveal: "Klicken zum Aufdecken deiner Rolle",
+                hideCardAndNextPlayer: "Karte verbergen & Weiter",
+                hideCardAndPassTo: (playerNum) => `Karte verbergen & Weitergeben an Spieler ${playerNum}`,
+                allPlayersViewed: "Alle Spieler haben ihre Rollen gesehen. Das Spiel beginnt! Beginnt mit der Diskussion.",
+                impostorRole: "DU BIST DER",
+                impostorText: "VERRÄTER",
+                wordIs: "DAS WORT IST:",
+                instructionsTitle: "Spielanleitung",
+                instructions: [
+                    "Wähle deine Sprache und gib die Anzahl der Spieler ein (3 oder mehr).",
+                    "Klicke auf 'Spiel starten'.",
+                    "Der Bildschirm wird jeden Spieler einzeln auffordern. Nur der aktuelle Spieler sollte auf den Bildschirm schauen.",
+                    "Wenn du an der Reihe bist, klicke auf 'Meine Karte zeigen'.",
+                    "Klicke auf die Karte, um deine Rolle zu sehen. Merke sie dir!",
+                    "Ein Spieler ist der 'Verräter' und kennt das geheime Wort nicht. Alle anderen erhalten das Wort.",
+                    "Klicke auf 'Karte verbergen & Weiter' (oder 'Weitergeben an nächsten Spieler') und gib das Gerät dann ggf. weiter.",
+                    "Nachdem jeder seine Rolle gesehen hat, beschreiben die Spieler abwechselnd das Wort (oder tun so, als ob, wenn sie der Verräter sind).",
+                    "Diskutiert und stimmt ab, um den Verräter zu finden!"
+                ],
+                playerCountError: "Bitte gib eine Spieleranzahl zwischen 3 und 20 ein.",
+                languageLabel: "Sprache:",
+                playerX: (playerNum) => `Spieler ${playerNum}`
+            }
+        };
+
+        const allWords = {
+            en: [
+                "Apple", "Banana", "Mountain", "River", "Ocean", "Desert", "Forest", "City", "Village", "Book",
+                "Chair", "Table", "Computer", "Phone", "Car", "Bicycle", "Train", "Airplane", "Dog", "Cat",
+                "Elephant", "Lion", "Tiger", "Bear", "Sun", "Moon", "Star", "Cloud", "Rain", "Snow",
+                "Music", "Art", "Science", "History", "Math", "Sport", "Game", "Movie", "Food", "Drink",
+                "Love", "Hate", "Joy", "Sadness", "Anger", "Fear", "Friendship", "Family", "Work", "Holiday",
+                "Beach", "Park", "School", "Hospital", "Kitchen", "Bedroom", "Garden", "Road", "Bridge", "Key",
+                "Door", "Window", "Light", "Darkness", "Dream", "Reality", "Time", "Space", "Money", "Power",
+                "Magic", "Mystery", "Adventure", "Comedy", "Tragedy", "Future", "Past", "Present", "Robot", "Alien",
+                "Castle", "Ship", "Island", "Volcano", "Rainbow", "Flower", "Tree", "Grass", "Sky", "Earth",
+                "Wind", "Fire", "Water", "Ice", "Sand", "Stone", "Gold", "Silver", "Diamond", "Treasure",
+                "Pirate", "Knight", "King", "Queen", "Princess", "Dragon", "Ghost", "Monster", "Hero", "Villain",
+                "Breakfast", "Lunch", "Dinner", "Desert", "Forest", "Jungle", "Cave", "Island", "Pyramid", "Statue"
+            ],
+            de: [
+                "Apfel", "Banane", "Berg", "Fluss", "Ozean", "Wüste", "Wald", "Stadt", "Dorf", "Buch",
+                "Stuhl", "Tisch", "Computer", "Telefon", "Auto", "Fahrrad", "Zug", "Flugzeug", "Hund", "Katze",
+                "Elefant", "Löwe", "Tiger", "Bär", "Sonne", "Mond", "Stern", "Wolke", "Regen", "Schnee",
+                "Musik", "Kunst", "Wissenschaft", "Geschichte", "Mathe", "Sport", "Spiel", "Film", "Essen", "Getränk",
+                "Liebe", "Hass", "Freude", "Traurigkeit", "Wut", "Angst", "Freundschaft", "Familie", "Arbeit", "Urlaub",
+                "Strand", "Park", "Schule", "Krankenhaus", "Küche", "Schlafzimmer", "Garten", "Straße", "Brücke", "Schlüssel",
+                "Tür", "Fenster", "Licht", "Dunkelheit", "Traum", "Realität", "Zeit", "Raum", "Geld", "Macht",
+                "Magie", "Mysterium", "Abenteuer", "Komödie", "Tragödie", "Zukunft", "Vergangenheit", "Gegenwart", "Roboter", "Außerirdischer",
+                "Schloss", "Schiff", "Insel", "Vulkan", "Regenbogen", "Blume", "Baum", "Gras", "Himmel", "Erde",
+                "Wind", "Feuer", "Wasser", "Eis", "Sand", "Stein", "Gold", "Silber", "Diamant", "Schatz",
+                "Pirat", "Ritter", "König", "Königin", "Prinzessin", "Drache", "Geist", "Monster", "Held", "Bösewicht",
+                "Frühstück", "Mittagessen", "Abendessen", "Wüste", "Wald", "Dschungel", "Höhle", "Insel", "Pyramide", "Statue"
+            ]
+        };
+        // Ensure 100+ words
+        // console.log("EN words:", allWords.en.length); // Should be 110
+        // console.log("DE words:", allWords.de.length); // Should be 110
+
+        // Global state
+        let currentLanguage = 'en';
+        let cardsData = [];
+        let currentPlayerIndex = 0;
+        let totalPlayers = 0;
+        let gameActive = false;
+        let secretWordForCurrentGame = '';
+
+        // DOM Elements
+        const langSelector = document.getElementById('language-selector');
+        const langLabel = document.getElementById('language-label');
+        const gameTitleH1 = document.getElementById('game-title-h1');
+        const playerCountInput = document.getElementById('player-count');
+        const playerCountLabel = document.getElementById('player-count-label');
+        const mainStartGameBtn = document.getElementById('main-start-game-btn');
+        const messageArea = document.getElementById('message-area');
+        const gameArea = document.getElementById('game-area');
+        const actionButtonsArea = document.getElementById('action-buttons-area');
+        const setupSectionDiv = document.getElementById('setup-section');
+        const instructionsTitleEl = document.getElementById('instructions-title');
+        const instructionsListEl = document.getElementById('instructions-list');
+        
+        let revealCardBtnEl, nextPlayerBtnEl, newGameSetupBtnEl;
+
+        function createDynamicButtons() {
+            actionButtonsArea.innerHTML = ''; // Clear previous buttons
+
+            revealCardBtnEl = document.createElement('button');
+            revealCardBtnEl.id = 'reveal-my-card-btn';
+            revealCardBtnEl.classList.add('action-btn');
+            revealCardBtnEl.style.display = 'none';
+            revealCardBtnEl.addEventListener('click', displayPlayerCardView);
+            actionButtonsArea.appendChild(revealCardBtnEl);
+
+            nextPlayerBtnEl = document.createElement('button');
+            nextPlayerBtnEl.id = 'next-player-btn';
+            nextPlayerBtnEl.classList.add('action-btn');
+            nextPlayerBtnEl.style.display = 'none';
+            nextPlayerBtnEl.addEventListener('click', handleNextPlayerAction);
+            actionButtonsArea.appendChild(nextPlayerBtnEl);
+
+            newGameSetupBtnEl = document.createElement('button');
+            newGameSetupBtnEl.id = 'new-game-setup-btn';
+            newGameSetupBtnEl.classList.add('action-btn');
+            newGameSetupBtnEl.style.display = 'none';
+            newGameSetupBtnEl.addEventListener('click', resetGameInterface);
+            actionButtonsArea.appendChild(newGameSetupBtnEl);
+        }
+
+        function updateUIText() {
+            const strings = uiStrings[currentLanguage];
+            gameTitleH1.textContent = strings.gameTitle;
+            langLabel.textContent = strings.languageLabel;
+            playerCountLabel.textContent = strings.numPlayersLabel;
+            
+            if (!gameActive) {
+                mainStartGameBtn.textContent = strings.startGame;
+            }
+            
+            instructionsTitleEl.textContent = strings.instructionsTitle;
+            instructionsListEl.innerHTML = strings.instructions.map(item => `<li>${item}</li>`).join('');
+
+            // Update dynamic button texts if they are part of the current flow
+            // These will be set specifically when they are made visible.
+            // But for New Game button, if it's visible:
+            if (newGameSetupBtnEl && newGameSetupBtnEl.style.display !== 'none') {
+                newGameSetupBtnEl.textContent = strings.newGame;
+            }
+        }
+
+        function changeLanguage() {
+            const newLang = langSelector.value;
+            if (gameActive && newLang !== currentLanguage) {
+                alert(newLang === 'de' ? "Sprache geändert. Das laufende Spiel wird zurückgesetzt, um die Wortliste zu aktualisieren." : "Language changed. The current game will be reset to update the word list.");
+                resetGameInterface(); // Reset if game is active and language changes
+            }
+            currentLanguage = newLang;
+            updateUIText();
+            messageArea.textContent = ''; // Clear any old error messages
+        }
+
+        function initializeApp() {
+            createDynamicButtons();
+            langSelector.value = currentLanguage;
+            langSelector.addEventListener('change', changeLanguage);
+            mainStartGameBtn.addEventListener('click', handleStartGame);
+            updateUIText();
+            setupSectionDiv.style.display = 'block';
+            mainStartGameBtn.style.display = 'inline-block';
+            newGameSetupBtnEl.style.display = 'none';
+        }
+
+        function handleStartGame() {
+            totalPlayers = parseInt(playerCountInput.value);
+            messageArea.textContent = '';
+
+            if (totalPlayers < 3 || totalPlayers > 20) {
+                messageArea.textContent = uiStrings[currentLanguage].playerCountError;
+                return;
+            }
+
+            gameActive = true;
+            setupSectionDiv.style.display = 'none';
+            mainStartGameBtn.style.display = 'none';
+
+            const wordOptions = allWords[currentLanguage];
+            secretWordForCurrentGame = wordOptions[Math.floor(Math.random() * wordOptions.length)];
+            const impostorPlayerIndex = Math.floor(Math.random() * totalPlayers);
+
+            cardsData = [];
+            for (let i = 0; i < totalPlayers; i++) {
+                cardsData.push({
+                    playerNumber: i + 1,
+                    isImpostor: i === impostorPlayerIndex,
+                    // The 'word' property will hold "IMPOSTOR" or the actual word
+                    wordDisplay: i === impostorPlayerIndex ? uiStrings[currentLanguage].impostorText.toUpperCase() : secretWordForCurrentGame,
+                });
+            }
+            currentPlayerIndex = 0;
+            promptNextPlayerTurn();
+        }
+
+        function promptNextPlayerTurn() {
+            gameArea.innerHTML = '';
+            revealCardBtnEl.style.display = 'none';
+            nextPlayerBtnEl.style.display = 'none';
+            newGameSetupBtnEl.style.display = 'none';
+
+            if (currentPlayerIndex < totalPlayers) {
+                const playerNum = cardsData[currentPlayerIndex].playerNumber;
+                const promptText = document.createElement('h2');
+                promptText.textContent = uiStrings[currentLanguage].playerTurnPrompt(playerNum);
+                gameArea.appendChild(promptText);
+                
+                revealCardBtnEl.textContent = uiStrings[currentLanguage].readyButton(playerNum);
+                revealCardBtnEl.style.display = 'block';
+            } else {
+                displayGameReadyMessage();
+            }
+        }
+
+        function displayPlayerCardView() {
+            gameArea.innerHTML = ''; // Clear prompt
+            revealCardBtnEl.style.display = 'none';
+
+            const currentCardData = cardsData[currentPlayerIndex];
+            const cardElement = createCardElementForPlayer(currentCardData);
+            gameArea.appendChild(cardElement);
+            
+            const nextPlayerNumDisplay = currentPlayerIndex + 2; // For "Pass to Player X"
+            if (currentPlayerIndex < totalPlayers - 1) {
+                 nextPlayerBtnEl.textContent = uiStrings[currentLanguage].hideCardAndPassTo(nextPlayerNumDisplay);
+            } else {
+                 nextPlayerBtnEl.textContent = uiStrings[currentLanguage].hideCardAndNextPlayer;
+            }
+            nextPlayerBtnEl.style.display = 'block';
+        }
+
+        function createCardElementForPlayer(cardData) {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            
+            const cardFront = document.createElement('div');
+            cardFront.classList.add('card-face', 'card-front');
+            const playerNumDisplay = document.createElement('span');
+            playerNumDisplay.classList.add('player-number');
+            playerNumDisplay.textContent = uiStrings[currentLanguage].playerX(cardData.playerNumber);
+            const instructionText = document.createElement('p');
+            instructionText.classList.add('instruction-text');
+            instructionText.textContent = uiStrings[currentLanguage].clickToReveal;
+            cardFront.appendChild(playerNumDisplay);
+            cardFront.appendChild(instructionText);
+
+            const cardBack = document.createElement('div');
+            cardBack.classList.add('card-face', 'card-back');
+            const roleText = document.createElement('span');
+            roleText.classList.add('role-text');
+            const wordDisplayText = document.createElement('span');
+            wordDisplayText.classList.add('word-text');
+            
+            if (cardData.isImpostor) {
+                cardBack.classList.add('impostor-card');
+                roleText.textContent = uiStrings[currentLanguage].impostorRole;
+                wordDisplayText.textContent = uiStrings[currentLanguage].impostorText.toUpperCase();
+            } else {
+                cardBack.classList.add('word-card');
+                roleText.textContent = uiStrings[currentLanguage].wordIs;
+                wordDisplayText.textContent = cardData.wordDisplay; // This is the secret word
+            }
+            cardBack.appendChild(roleText);
+            cardBack.appendChild(wordDisplayText);
+            
+            card.appendChild(cardFront);
+            card.appendChild(cardBack);
+
+            card.addEventListener('click', () => {
+                card.classList.toggle('flipped');
+            });
+            return card;
+        }
+
+        function handleNextPlayerAction() {
+            currentPlayerIndex++;
+            promptNextPlayerTurn();
+        }
+
+        function displayGameReadyMessage() {
+            gameArea.innerHTML = '';
+            const readyMessage = document.createElement('h2');
+            readyMessage.textContent = uiStrings[currentLanguage].allPlayersViewed;
+            gameArea.appendChild(readyMessage);
+
+            revealCardBtnEl.style.display = 'none';
+            nextPlayerBtnEl.style.display = 'none';
+            newGameSetupBtnEl.textContent = uiStrings[currentLanguage].newGame;
+            newGameSetupBtnEl.style.display = 'block';
+        }
+
+        function resetGameInterface() {
+            gameActive = false;
+            cardsData = [];
+            currentPlayerIndex = 0;
+            totalPlayers = 0;
+            secretWordForCurrentGame = '';
+
+            gameArea.innerHTML = '';
+            messageArea.textContent = '';
+            
+            setupSectionDiv.style.display = 'block';
+            mainStartGameBtn.style.display = 'inline-block';
+            
+            if(revealCardBtnEl) revealCardBtnEl.style.display = 'none';
+            if(nextPlayerBtnEl) nextPlayerBtnEl.style.display = 'none';
+            if(newGameSetupBtnEl) newGameSetupBtnEl.style.display = 'none';
+            
+            playerCountInput.value = "3";
+            updateUIText(); // Update texts for the reset state
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+
+</body>
+</html>
